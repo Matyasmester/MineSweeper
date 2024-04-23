@@ -17,11 +17,15 @@ namespace Minesweeper
 
         private const int rectUnit = 25;
         private const int topOverlayEndsAt = 75;
-        private const int nMaxBombs = 10;
+        private const int nMaxBombs = 40;
 
-        private const char Clear = 'C';
+        private const char Undiscovered = 'U';
         private const char Bomb = 'B';
         private const char Discovered = 'D';
+        private const char Flagged = 'F';
+
+        private static readonly Image flagImage = Image.FromFile(@"assets\flag.png");
+        private static readonly Image mineImage = Image.FromFile(@"assets\mine.png");
 
         private readonly Size rectSize = new Size(rectUnit, rectUnit);
 
@@ -32,7 +36,7 @@ namespace Minesweeper
 
         private readonly Random random = new Random();
 
-        private readonly List<Label> addedLabels = new List<Label>();
+        private readonly List<Control> addedControls = new List<Control>();
 
         private char[,] Map;
 
@@ -56,29 +60,46 @@ namespace Minesweeper
         {
             if (e.Y < topOverlayEndsAt) return;
 
-            if(e.Button == MouseButtons.Left)
+            Point clampedLocation = new Point();
+
+            clampedLocation.X = (int)Math.Floor(e.X / (decimal)rectUnit) * rectUnit;
+            clampedLocation.Y = (int)Math.Floor(e.Y / (decimal)rectUnit) * rectUnit;
+
+            int x = clampedLocation.X;
+            int y = clampedLocation.Y;
+
+            char current = Map[x, y];
+
+            if (e.Button == MouseButtons.Left)
             {
+                if (current == Discovered || current == Flagged) return;
+
                 ClicksLabel.Text = (++nClicks).ToString();
 
-                Point clampedLocation = new Point();
-
-                clampedLocation.X = (int)Math.Floor(e.X / (decimal)rectUnit) * rectUnit;
-                clampedLocation.Y = (int)Math.Floor(e.Y / (decimal)rectUnit) * rectUnit;
-
-                int x = clampedLocation.X;
-                int y = clampedLocation.Y;
-
-                if (Map[x, y] == Bomb)
+                if (current == Bomb)
                 {
                     if(nClicks == 1)
                     {
                         ReplaceBomb(x, y);
                         return;
                     }
-                    else { MessageBox.Show("Meghaltal xdd balfasz"); }
+                    else 
+                    {
+                        GameOver(x, y);
+                    }
                 }
 
                 DiscoverCellsFrom(x, y);
+            }
+            if (e.Button == MouseButtons.Right)
+            {
+                if (current == Flagged)
+                {
+                    Unflag(x, y);
+                    return;
+                }
+
+                Flag(x, y);
             }
         }
 
@@ -88,16 +109,79 @@ namespace Minesweeper
             {
                 for (int y = topOverlayEndsAt; y < this.Height; y += rectUnit)
                 {
-                    Rectangle rect = new Rectangle(new Point(x, y), rectSize);
-
-                    graphics.FillRectangle(bgColorBrush, rect);
-                    graphics.DrawRectangle(blackPen, rect);
-
-                    Map[x, y] = Clear;
+                    SetUndiscovered(x, y);
                 }
             }
 
             PlaceBombs();
+        }
+
+        private void SetUndiscovered(int x, int y)
+        {
+            Rectangle rect = new Rectangle(new Point(x, y), rectSize);
+
+            graphics.FillRectangle(bgColorBrush, rect);
+            graphics.DrawRectangle(blackPen, rect);
+
+            Map[x, y] = Undiscovered;
+        }
+
+        private void Unflag(int x, int y)
+        {
+            Control toRemove = addedControls.FirstOrDefault(c => c.Tag != null && c.Tag.Equals(Flagged) && c.Location.X == x && c.Location.Y == y);
+
+            this.Controls.Remove(toRemove);
+            addedControls.Remove(toRemove);
+
+            SetUndiscovered(x, y);
+        }
+
+        private void GameOver(int x, int y)
+        {
+            PictureBox bombBox = new PictureBox()
+            {
+                Size = rectSize,
+                Location = new Point(x, y),
+                Image = mineImage,
+                SizeMode = PictureBoxSizeMode.StretchImage,
+                Tag = Bomb
+            };
+
+            this.Controls.Add(bombBox);
+            addedControls.Add(bombBox);
+
+            this.MouseClick -= onMouseClick;
+
+            MessageBox.Show("Game over!");
+        }
+
+        private void Flag(int x, int y)
+        {
+            PictureBox flagBox = new PictureBox()
+            {
+                Size = rectSize,
+                Location = new Point(x, y),
+                Image = flagImage,
+                SizeMode = PictureBoxSizeMode.StretchImage,
+                Tag = Flagged
+            };
+
+            this.Controls.Add(flagBox);
+            addedControls.Add(flagBox);
+
+            flagBox.Enabled = false;
+
+            Map[x, y] = Flagged;
+        }
+
+        private void Discover(int x, int y)
+        {
+            Rectangle rect = new Rectangle(new Point(x, y), rectSize);
+
+            graphics.FillRectangle(grayBrush, rect);
+            graphics.DrawRectangle(darkGrayPen, rect);
+
+            Map[x, y] = Discovered;
         }
 
         private void MainForm_Shown(object sender, EventArgs e)
@@ -124,8 +208,6 @@ namespace Minesweeper
                 while (Map[randX, randY] == Bomb);
 
                 Map[randX, randY] = Bomb;
-
-                graphics.FillRectangle(new SolidBrush(Color.Red), new Rectangle(new Point(randX, randY), rectSize));
             }
         }
 
@@ -133,15 +215,17 @@ namespace Minesweeper
         {
             CreateAndDrawGrid();
 
-            foreach(Label label in addedLabels)
+            foreach(Control control in addedControls)
             {
-                this.Controls.Remove(label);
+                this.Controls.Remove(control);
             }
+
+            this.MouseClick += onMouseClick;
         }
 
         private void ReplaceBomb(int x, int y)
         {
-            Map[x, y] = Clear;
+            Map[x, y] = Undiscovered;
 
             int randX, randY;
 
@@ -157,7 +241,33 @@ namespace Minesweeper
 
         private void DiscoverCellsFrom(int x, int y)
         {
+            if(x > this.Width || x < 0 || y > this.Height || y < 0) return;
+            if (Map[x, y] != Undiscovered) return;
+
+            Discover(x, y);
+
             int bombCount = GetAdjacentBombCount(x, y);
+
+            if (bombCount == 0)
+            {
+                int lowX = (x - rectUnit) < 0 ? 0 : (x - rectUnit);
+                int lowY = (y - rectUnit) < 0 ? 0 : (y - rectUnit);
+
+                int highX = (x + rectUnit) > this.Width ? this.Width : (x + rectUnit);
+                int highY = (y + rectUnit) > this.Height ? this.Height : (y + rectUnit);
+
+                for(int X = lowX; X < highX; X += rectUnit)
+                {
+                    for(int Y = lowY; Y < highY; Y += rectUnit)
+                    {
+                        if (X == x && Y == y) continue;
+
+                        DiscoverCellsFrom(X, Y);
+                    }
+                }
+
+                return;
+            }
 
             Label label = new Label()
             {
@@ -165,7 +275,8 @@ namespace Minesweeper
                 Text = bombCount.ToString(),
                 Width = 15,
                 Height = 18,
-                Font = new Font("Arial", 14, FontStyle.Bold)
+                Font = new Font("Arial", 14, FontStyle.Bold),
+                BackColor = Color.Gray
             };
 
             switch (bombCount)
@@ -187,7 +298,7 @@ namespace Minesweeper
             }
             this.Controls.Add(label);
 
-            addedLabels.Add(label);
+            addedControls.Add(label);
         }
 
         private int GetAdjacentBombCount(int x, int y)
