@@ -17,12 +17,17 @@ namespace Minesweeper
 
         private const int rectUnit = 25;
         private const int topOverlayEndsAt = 75;
-        private const int nMaxBombs = 40;
+        private const int nMaxBombs = 60;
+
+        private bool areClickEventsEnabled = false;
+
+        private int nRemainingBombs = nMaxBombs;
 
         private const char Undiscovered = 'U';
         private const char Bomb = 'B';
         private const char Discovered = 'D';
-        private const char Flagged = 'F';
+        private const char FlaggedClear = 'F';
+        private const char FlaggedBomb = 'O';
 
         private static readonly Image flagImage = Image.FromFile(@"assets\flag.png");
         private static readonly Image mineImage = Image.FromFile(@"assets\mine.png");
@@ -51,9 +56,11 @@ namespace Minesweeper
 
             this.Shown += new EventHandler(this.MainForm_Shown);
 
-            this.MouseClick += onMouseClick;
+            EnableClickEvents();
 
             bgColorBrush = new SolidBrush(this.BackColor);
+
+            BombsRemainingLabel.Text = nMaxBombs.ToString();
         }
 
         private void onMouseClick(object sender, MouseEventArgs e)
@@ -72,28 +79,30 @@ namespace Minesweeper
 
             if (e.Button == MouseButtons.Left)
             {
-                if (current == Discovered || current == Flagged) return;
+                nClicks++;
 
-                ClicksLabel.Text = (++nClicks).ToString();
+                if (!(current == Undiscovered || current == Bomb)) return;
 
                 if (current == Bomb)
                 {
                     if(nClicks == 1)
                     {
                         ReplaceBomb(x, y);
+                        DiscoverCellsFrom(x, y);
                         return;
                     }
                     else 
                     {
-                        GameOver(x, y);
+                        GameLost("You blew up!");
                     }
                 }
 
                 DiscoverCellsFrom(x, y);
             }
+
             if (e.Button == MouseButtons.Right)
             {
-                if (current == Flagged)
+                if (current == FlaggedClear || current == FlaggedBomb)
                 {
                     Unflag(x, y);
                     return;
@@ -128,42 +137,84 @@ namespace Minesweeper
 
         private void Unflag(int x, int y)
         {
-            Control toRemove = addedControls.FirstOrDefault(c => c.Tag != null && c.Tag.Equals(Flagged) && c.Location.X == x && c.Location.Y == y);
+            Control toRemove = addedControls.FirstOrDefault(c => c.Tag != null && c.Tag.Equals(FlaggedClear) && c.Location.X == x && c.Location.Y == y);
 
             this.Controls.Remove(toRemove);
             addedControls.Remove(toRemove);
 
-            SetUndiscovered(x, y);
+            string displayText = BombsRemainingLabel.Text;
+            BombsRemainingLabel.Text = (int.Parse(displayText) + 1).ToString();
+
+            if (Map[x, y] == FlaggedBomb)
+            {
+                nRemainingBombs++;
+
+                Map[x, y] = Bomb;
+            }
+            else { SetUndiscovered(x, y); }
         }
 
-        private void GameOver(int x, int y)
+        private void GameLost(string msg)
         {
-            PictureBox bombBox = new PictureBox()
+            // Display all bombs
+            for (int x = 0; x < this.Width; x += rectUnit)
             {
-                Size = rectSize,
-                Location = new Point(x, y),
-                Image = mineImage,
-                SizeMode = PictureBoxSizeMode.StretchImage,
-                Tag = Bomb
-            };
+                for (int y = topOverlayEndsAt; y < this.Height; y += rectUnit)
+                {
+                    if (Map[x, y] == Bomb)
+                    {
+                        PictureBox bombBox = new PictureBox()
+                        {
+                            Size = rectSize,
+                            Location = new Point(x, y),
+                            Image = mineImage,
+                            SizeMode = PictureBoxSizeMode.StretchImage,
+                            Tag = Bomb
+                        };
 
-            this.Controls.Add(bombBox);
-            addedControls.Add(bombBox);
+                        this.Controls.Add(bombBox);
+                        addedControls.Add(bombBox);
+                    }
+                }
+            }
+            DisableClickEvents();
 
+            MessageBox.Show(msg);
+        }
+
+        private void GameWon()
+        {
+            MessageBox.Show("You won by clicking " + nClicks + " times!");
+
+            DisableClickEvents();
+        }
+
+        private void DisableClickEvents()
+        {
+            areClickEventsEnabled = false;
             this.MouseClick -= onMouseClick;
+        }
 
-            MessageBox.Show("Game over!");
+        private void EnableClickEvents()
+        {
+            if (areClickEventsEnabled) return;
+            this.MouseClick += onMouseClick;
+            areClickEventsEnabled = true;
         }
 
         private void Flag(int x, int y)
         {
+            char current = Map[x, y];
+
+            if (current == Discovered) return; 
+
             PictureBox flagBox = new PictureBox()
             {
                 Size = rectSize,
                 Location = new Point(x, y),
                 Image = flagImage,
                 SizeMode = PictureBoxSizeMode.StretchImage,
-                Tag = Flagged
+                Tag = FlaggedClear
             };
 
             this.Controls.Add(flagBox);
@@ -171,7 +222,17 @@ namespace Minesweeper
 
             flagBox.Enabled = false;
 
-            Map[x, y] = Flagged;
+            string displayText = BombsRemainingLabel.Text;
+            BombsRemainingLabel.Text = (int.Parse(displayText) - 1).ToString();
+
+            if (current == Bomb)
+            {
+                Map[x, y] = FlaggedBomb;
+                nRemainingBombs--;
+            }
+            else { Map[x, y] = FlaggedClear; }
+
+            if(nRemainingBombs == 0) GameWon();
         }
 
         private void Discover(int x, int y)
@@ -220,7 +281,7 @@ namespace Minesweeper
                 this.Controls.Remove(control);
             }
 
-            this.MouseClick += onMouseClick;
+            EnableClickEvents();
         }
 
         private void ReplaceBomb(int x, int y)
@@ -242,6 +303,7 @@ namespace Minesweeper
         private void DiscoverCellsFrom(int x, int y)
         {
             if(x > this.Width || x < 0 || y > this.Height || y < 0) return;
+
             if (Map[x, y] != Undiscovered) return;
 
             Discover(x, y);
@@ -256,9 +318,9 @@ namespace Minesweeper
                 int highX = (x + rectUnit) > this.Width ? this.Width : (x + rectUnit);
                 int highY = (y + rectUnit) > this.Height ? this.Height : (y + rectUnit);
 
-                for(int X = lowX; X < highX; X += rectUnit)
+                for(int X = lowX; X <= highX; X += rectUnit)
                 {
-                    for(int Y = lowY; Y < highY; Y += rectUnit)
+                    for(int Y = lowY; Y <= highY; Y += rectUnit)
                     {
                         if (X == x && Y == y) continue;
 

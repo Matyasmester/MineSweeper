@@ -30,7 +30,7 @@
         {
             this.RestartButton = new System.Windows.Forms.Button();
             this.TimeRemainingLabel = new System.Windows.Forms.Label();
-            this.ClicksLabel = new System.Windows.Forms.Label();
+            this.BombsRemainingLabel = new System.Windows.Forms.Label();
             this.SuspendLayout();
             // 
             // RestartButton
@@ -55,16 +55,16 @@
             this.TimeRemainingLabel.TabIndex = 1;
             this.TimeRemainingLabel.Text = "0";
             // 
-            // ClicksLabel
+            // BombsRemainingLabel
             // 
-            this.ClicksLabel.AutoSize = true;
-            this.ClicksLabel.Font = new System.Drawing.Font("Microsoft Sans Serif", 36F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(238)));
-            this.ClicksLabel.ForeColor = System.Drawing.Color.DarkRed;
-            this.ClicksLabel.Location = new System.Drawing.Point(752, 9);
-            this.ClicksLabel.Name = "ClicksLabel";
-            this.ClicksLabel.Size = new System.Drawing.Size(63, 69);
-            this.ClicksLabel.TabIndex = 2;
-            this.ClicksLabel.Text = "0";
+            this.BombsRemainingLabel.AutoSize = true;
+            this.BombsRemainingLabel.Font = new System.Drawing.Font("Microsoft Sans Serif", 36F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(238)));
+            this.BombsRemainingLabel.ForeColor = System.Drawing.Color.DarkRed;
+            this.BombsRemainingLabel.Location = new System.Drawing.Point(752, 9);
+            this.BombsRemainingLabel.Name = "BombsRemainingLabel";
+            this.BombsRemainingLabel.Size = new System.Drawing.Size(63, 69);
+            this.BombsRemainingLabel.TabIndex = 2;
+            this.BombsRemainingLabel.Text = "0";
             // 
             // MainForm
             // 
@@ -72,7 +72,7 @@
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.Silver;
             this.ClientSize = new System.Drawing.Size(868, 648);
-            this.Controls.Add(this.ClicksLabel);
+            this.Controls.Add(this.BombsRemainingLabel);
             this.Controls.Add(this.TimeRemainingLabel);
             this.Controls.Add(this.RestartButton);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
@@ -89,7 +89,7 @@
 
         private System.Windows.Forms.Button RestartButton;
         private System.Windows.Forms.Label TimeRemainingLabel;
-        private System.Windows.Forms.Label ClicksLabel;
+        private System.Windows.Forms.Label BombsRemainingLabel;
     }
 }
 
