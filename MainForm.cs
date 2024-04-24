@@ -142,6 +142,8 @@ namespace Minesweeper
             this.Controls.Remove(toRemove);
             addedControls.Remove(toRemove);
 
+            toRemove.Dispose();
+
             string displayText = BombsRemainingLabel.Text;
             BombsRemainingLabel.Text = (int.Parse(displayText) + 1).ToString();
 
@@ -160,9 +162,13 @@ namespace Minesweeper
             for (int x = 0; x < this.Width; x += rectUnit)
             {
                 for (int y = topOverlayEndsAt; y < this.Height; y += rectUnit)
-                {
-                    if (Map[x, y] == Bomb)
+                { 
+                    char current = Map[x, y];
+
+                    if (current == Bomb || current == FlaggedBomb)
                     {
+                        if (current == FlaggedBomb) Unflag(x, y);
+                        
                         PictureBox bombBox = new PictureBox()
                         {
                             Size = rectSize,
@@ -182,9 +188,9 @@ namespace Minesweeper
             MessageBox.Show(msg);
         }
 
-        private void GameWon()
+        private void GameWon(string msg)
         {
-            MessageBox.Show("You won by clicking " + nClicks + " times!");
+            MessageBox.Show(msg);
 
             DisableClickEvents();
         }
@@ -232,7 +238,7 @@ namespace Minesweeper
             }
             else { Map[x, y] = FlaggedClear; }
 
-            if(nRemainingBombs == 0) GameWon();
+            if(nRemainingBombs == 0) GameWon("Congrats! You won in " + nClicks + " clicks!");
         }
 
         private void Discover(int x, int y)
@@ -274,14 +280,18 @@ namespace Minesweeper
 
         private void RestartButton_Click(object sender, EventArgs e)
         {
-            CreateAndDrawGrid();
-
             foreach(Control control in addedControls)
             {
                 this.Controls.Remove(control);
+
+                control.Dispose();
             }
 
+            CreateAndDrawGrid();
+
             EnableClickEvents();
+
+            nClicks = 0;
         }
 
         private void ReplaceBomb(int x, int y)
