@@ -292,6 +292,8 @@ namespace Minesweeper
             EnableClickEvents();
 
             nClicks = 0;
+
+            BombsRemainingLabel.Text = nMaxBombs.ToString();
         }
 
         private void ReplaceBomb(int x, int y)
@@ -389,7 +391,9 @@ namespace Minesweeper
                 {
                     if (X == x && Y == y) continue;
 
-                    if (Map[X, Y] == Bomb) bombCount++;
+                    char current = Map[X, Y];
+
+                    if (current == Bomb || current == FlaggedBomb) bombCount++;
                 }
             }
 
