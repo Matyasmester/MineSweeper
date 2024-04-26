@@ -7,7 +7,6 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using static System.Windows.Forms.VisualStyles.VisualStyleElement.Rebar;
 
 namespace Minesweeper
 {
@@ -16,12 +15,20 @@ namespace Minesweeper
         private Graphics graphics;
 
         private const int rectUnit = 25;
+        private const int penWidth = 2;
         private const int topOverlayEndsAt = 75;
-        private const int nMaxBombs = 60;
+
+        private int nMaxBombs = 0;
+        private int nRemainingBombs;
+
+        private int widthCells = 0;
+        private int heightCells = 0;
+
+        private int clientWidth = 0;
+        private int clientHeight = 0;
+        private int clientOffset = 0;
 
         private bool areClickEventsEnabled = false;
-
-        private int nRemainingBombs = nMaxBombs;
 
         private const char Undiscovered = 'U';
         private const char Bomb = 'B';
@@ -29,13 +36,15 @@ namespace Minesweeper
         private const char FlaggedClear = 'F';
         private const char FlaggedBomb = 'O';
 
+        private Difficulty difficulty = Difficulty.None;
+
         private static readonly Image flagImage = Image.FromFile(@"assets\flag.png");
         private static readonly Image mineImage = Image.FromFile(@"assets\mine.png");
 
         private readonly Size rectSize = new Size(rectUnit, rectUnit);
 
-        private readonly Pen blackPen = new Pen(Color.Black, 2);
-        private readonly Pen darkGrayPen = new Pen(Color.DarkGray, 2);
+        private readonly Pen blackPen = new Pen(Color.Black, penWidth);
+        private readonly Pen darkGrayPen = new Pen(Color.DarkGray, penWidth);
         private readonly Brush bgColorBrush;
         private readonly Brush grayBrush = new SolidBrush(Color.Gray);
 
@@ -52,6 +61,49 @@ namespace Minesweeper
             InitializeComponent();
             graphics = this.CreateGraphics();
 
+            DifficultySelectForm diffSelectForm = new DifficultySelectForm(this);
+            DialogResult result = diffSelectForm.ShowDialog();
+
+            // Means a difficulty was selected
+            if (result == DialogResult.OK)
+            {
+                nMaxBombs = (int)difficulty;
+                nRemainingBombs = nMaxBombs;
+
+                switch(difficulty)
+                {
+                    case Difficulty.Beginner:
+                        widthCells = 9;
+                        heightCells = 9;
+
+                        clientOffset = 300;
+                        break;
+
+                    case Difficulty.Intermediate:
+                        widthCells = 16;
+                        heightCells = 16;
+
+                        clientOffset = 200;
+                        break;
+
+                    case Difficulty.Expert:
+                        widthCells = 30;
+                        heightCells = 16;
+
+                        clientOffset = 25;
+                        break;
+
+                    default:
+                        return;
+                }
+
+                clientWidth = widthCells * rectUnit;
+                clientHeight = (heightCells * rectUnit) + topOverlayEndsAt;     
+            }
+            else return;
+
+            diffSelectForm.Dispose();
+
             Map = new char[this.Width, this.Height];
 
             this.Shown += new EventHandler(this.MainForm_Shown);
@@ -61,6 +113,11 @@ namespace Minesweeper
             bgColorBrush = new SolidBrush(this.BackColor);
 
             BombsRemainingLabel.Text = nMaxBombs.ToString();
+        }
+
+        public void SetDifficulty(Difficulty difficulty)
+        {
+            this.difficulty = difficulty;
         }
 
         private void onMouseClick(object sender, MouseEventArgs e)
@@ -114,9 +171,9 @@ namespace Minesweeper
 
         private void CreateAndDrawGrid()
         {
-            for (int x = 0; x < this.Width; x += rectUnit)
+            for (int x = clientOffset; x < clientOffset + clientWidth; x += rectUnit)
             {
-                for (int y = topOverlayEndsAt; y < this.Height; y += rectUnit)
+                for (int y = topOverlayEndsAt; y < clientHeight; y += rectUnit)
                 {
                     SetUndiscovered(x, y);
                 }
@@ -127,12 +184,17 @@ namespace Minesweeper
 
         private void SetUndiscovered(int x, int y)
         {
-            Rectangle rect = new Rectangle(new Point(x, y), rectSize);
-
-            graphics.FillRectangle(bgColorBrush, rect);
-            graphics.DrawRectangle(blackPen, rect);
+            DrawRectAt(new Point(x, y), blackPen, bgColorBrush, graphics);
 
             Map[x, y] = Undiscovered;
+        }
+
+        private void DrawRectAt(Point p, Pen pen, Brush brush, Graphics graphics)
+        {
+            Rectangle rect = new Rectangle(p, rectSize);
+
+            graphics.FillRectangle(brush, rect);
+            graphics.DrawRectangle(pen, rect);
         }
 
         private void Unflag(int x, int y)
@@ -152,8 +214,10 @@ namespace Minesweeper
                 nRemainingBombs++;
 
                 Map[x, y] = Bomb;
+
+                DrawRectAt(new Point(x, y), blackPen, bgColorBrush, graphics);
             }
-            else { SetUndiscovered(x, y); }
+            else SetUndiscovered(x, y);
         }
 
         private void GameLost(string msg)
@@ -243,10 +307,7 @@ namespace Minesweeper
 
         private void Discover(int x, int y)
         {
-            Rectangle rect = new Rectangle(new Point(x, y), rectSize);
-
-            graphics.FillRectangle(grayBrush, rect);
-            graphics.DrawRectangle(darkGrayPen, rect);
+            DrawRectAt(new Point(x, y), darkGrayPen, grayBrush, graphics);
 
             Map[x, y] = Discovered;
         }
@@ -269,15 +330,15 @@ namespace Minesweeper
 
                 do
                 {
-                    randX = random.Next(0, this.Width / rectUnit) * rectUnit;
-                    randY = random.Next(topOverlayEndsAt / rectUnit, (this.Height / rectUnit) - 1) * rectUnit;
+                    randX = random.Next(clientOffset / rectUnit, (clientWidth + clientOffset) / rectUnit) * rectUnit;
+                    randY = random.Next(topOverlayEndsAt / rectUnit, clientHeight / rectUnit) * rectUnit;
                 }
                 while (Map[randX, randY] == Bomb);
 
                 Map[randX, randY] = Bomb;
             }
         }
-
+        
         private void RestartButton_Click(object sender, EventArgs e)
         {
             foreach(Control control in addedControls)
@@ -294,6 +355,8 @@ namespace Minesweeper
             nClicks = 0;
 
             BombsRemainingLabel.Text = nMaxBombs.ToString();
+
+            nRemainingBombs = nMaxBombs;
         }
 
         private void ReplaceBomb(int x, int y)
@@ -304,8 +367,8 @@ namespace Minesweeper
 
             do
             {
-                randX = random.Next(0, this.Width / rectUnit) * rectUnit;
-                randY = random.Next(topOverlayEndsAt / rectUnit, (this.Height / rectUnit) - 1) * rectUnit;
+                randX = random.Next(clientOffset / rectUnit, (clientWidth + clientOffset) / rectUnit) * rectUnit;
+                randY = random.Next(topOverlayEndsAt / rectUnit, clientHeight / rectUnit) * rectUnit;
             }
             while (Map[randX, randY] == Bomb || (randX == x && randY == y));
 
