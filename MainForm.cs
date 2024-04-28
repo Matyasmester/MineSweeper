@@ -56,12 +56,14 @@ namespace Minesweeper
 
         private int nClicks = 0;
 
+        private int elapsedSeconds = 0;
+
         public MainForm()
         {
             InitializeComponent();
             graphics = this.CreateGraphics();
 
-            DifficultySelectForm diffSelectForm = new DifficultySelectForm(this);
+            DifficultySelectForm diffSelectForm = new DifficultySelectForm(active: this);
             DialogResult result = diffSelectForm.ShowDialog();
 
             // Means a difficulty was selected
@@ -98,7 +100,7 @@ namespace Minesweeper
                 }
 
                 clientWidth = widthCells * rectUnit;
-                clientHeight = (heightCells * rectUnit) + topOverlayEndsAt;     
+                clientHeight = (heightCells * rectUnit) + topOverlayEndsAt;
             }
             else return;
 
@@ -113,6 +115,8 @@ namespace Minesweeper
             bgColorBrush = new SolidBrush(this.BackColor);
 
             BombsRemainingLabel.Text = nMaxBombs.ToString();
+
+            timer1.Start();
         }
 
         public void SetDifficulty(Difficulty difficulty)
@@ -122,7 +126,7 @@ namespace Minesweeper
 
         private void onMouseClick(object sender, MouseEventArgs e)
         {
-            if (e.Y < topOverlayEndsAt) return;
+            if (e.Y < topOverlayEndsAt || e.Y > clientHeight || e.X < clientOffset || e.X > (clientWidth + clientOffset)) return;
 
             Point clampedLocation = new Point();
 
@@ -247,6 +251,8 @@ namespace Minesweeper
                     }
                 }
             }
+            timer1.Stop();
+
             DisableClickEvents();
 
             MessageBox.Show(msg);
@@ -254,6 +260,8 @@ namespace Minesweeper
 
         private void GameWon(string msg)
         {
+            timer1.Stop();
+
             MessageBox.Show(msg);
 
             DisableClickEvents();
@@ -357,6 +365,10 @@ namespace Minesweeper
             BombsRemainingLabel.Text = nMaxBombs.ToString();
 
             nRemainingBombs = nMaxBombs;
+
+            elapsedSeconds = 0;
+            TimerLabel.Text = "0";
+            timer1.Start();
         }
 
         private void ReplaceBomb(int x, int y)
@@ -461,6 +473,11 @@ namespace Minesweeper
             }
 
             return bombCount;
+        }
+
+        private void timer1_Tick(object sender, EventArgs e)
+        {
+            TimerLabel.Text = (++elapsedSeconds).ToString();   
         }
     }
 }

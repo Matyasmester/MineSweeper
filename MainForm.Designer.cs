@@ -28,9 +28,11 @@
         /// </summary>
         private void InitializeComponent()
         {
+            this.components = new System.ComponentModel.Container();
             this.RestartButton = new System.Windows.Forms.Button();
-            this.TimeRemainingLabel = new System.Windows.Forms.Label();
             this.BombsRemainingLabel = new System.Windows.Forms.Label();
+            this.timer1 = new System.Windows.Forms.Timer(this.components);
+            this.TimerLabel = new System.Windows.Forms.Label();
             this.SuspendLayout();
             // 
             // RestartButton
@@ -46,17 +48,6 @@
             this.RestartButton.UseVisualStyleBackColor = false;
             this.RestartButton.Click += new System.EventHandler(this.RestartButton_Click);
             // 
-            // TimeRemainingLabel
-            // 
-            this.TimeRemainingLabel.AutoSize = true;
-            this.TimeRemainingLabel.Font = new System.Drawing.Font("Microsoft Sans Serif", 36F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(238)));
-            this.TimeRemainingLabel.ForeColor = System.Drawing.Color.DarkRed;
-            this.TimeRemainingLabel.Location = new System.Drawing.Point(27, 9);
-            this.TimeRemainingLabel.Name = "TimeRemainingLabel";
-            this.TimeRemainingLabel.Size = new System.Drawing.Size(63, 69);
-            this.TimeRemainingLabel.TabIndex = 1;
-            this.TimeRemainingLabel.Text = "0";
-            // 
             // BombsRemainingLabel
             // 
             this.BombsRemainingLabel.AutoSize = true;
@@ -68,14 +59,30 @@
             this.BombsRemainingLabel.TabIndex = 2;
             this.BombsRemainingLabel.Text = "0";
             // 
+            // timer1
+            // 
+            this.timer1.Interval = 1000;
+            this.timer1.Tick += new System.EventHandler(this.timer1_Tick);
+            // 
+            // TimerLabel
+            // 
+            this.TimerLabel.AutoSize = true;
+            this.TimerLabel.Font = new System.Drawing.Font("Microsoft Sans Serif", 36F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(238)));
+            this.TimerLabel.ForeColor = System.Drawing.Color.DarkRed;
+            this.TimerLabel.Location = new System.Drawing.Point(25, 9);
+            this.TimerLabel.Name = "TimerLabel";
+            this.TimerLabel.Size = new System.Drawing.Size(63, 69);
+            this.TimerLabel.TabIndex = 3;
+            this.TimerLabel.Text = "0";
+            // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.Silver;
             this.ClientSize = new System.Drawing.Size(1082, 648);
+            this.Controls.Add(this.TimerLabel);
             this.Controls.Add(this.BombsRemainingLabel);
-            this.Controls.Add(this.TimeRemainingLabel);
             this.Controls.Add(this.RestartButton);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
             this.MaximizeBox = false;
@@ -92,8 +99,9 @@
         #endregion
 
         private System.Windows.Forms.Button RestartButton;
-        private System.Windows.Forms.Label TimeRemainingLabel;
         private System.Windows.Forms.Label BombsRemainingLabel;
+        private System.Windows.Forms.Timer timer1;
+        private System.Windows.Forms.Label TimerLabel;
     }
 }
 
