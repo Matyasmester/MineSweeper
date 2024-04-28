@@ -8,7 +8,6 @@ namespace Minesweeper
 {
     public enum Difficulty
     {
-        None,
         Beginner = 10,
         Intermediate = 40,
         Expert = 99

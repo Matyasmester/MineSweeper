@@ -36,7 +36,7 @@ namespace Minesweeper
         private const char FlaggedClear = 'F';
         private const char FlaggedBomb = 'O';
 
-        private Difficulty difficulty = Difficulty.None;
+        private Difficulty difficulty = Difficulty.Beginner;
 
         private static readonly Image flagImage = Image.FromFile(@"assets\flag.png");
         private static readonly Image mineImage = Image.FromFile(@"assets\mine.png");
@@ -63,6 +63,28 @@ namespace Minesweeper
             InitializeComponent();
             graphics = this.CreateGraphics();
 
+            SelectDifficulty();
+
+            Map = new char[this.Width, this.Height];
+
+            this.Shown += new EventHandler(this.MainForm_Shown);
+
+            EnableClickEvents();
+
+            bgColorBrush = new SolidBrush(this.BackColor);
+
+            BombsRemainingLabel.Text = nMaxBombs.ToString();
+
+            timer1.Start();
+        }
+
+        public void SetDifficulty(Difficulty difficulty)
+        {
+            this.difficulty = difficulty;
+        }
+
+        private void SelectDifficulty()
+        {
             DifficultySelectForm diffSelectForm = new DifficultySelectForm(active: this);
             DialogResult result = diffSelectForm.ShowDialog();
 
@@ -72,7 +94,7 @@ namespace Minesweeper
                 nMaxBombs = (int)difficulty;
                 nRemainingBombs = nMaxBombs;
 
-                switch(difficulty)
+                switch (difficulty)
                 {
                     case Difficulty.Beginner:
                         widthCells = 9;
@@ -105,23 +127,6 @@ namespace Minesweeper
             else return;
 
             diffSelectForm.Dispose();
-
-            Map = new char[this.Width, this.Height];
-
-            this.Shown += new EventHandler(this.MainForm_Shown);
-
-            EnableClickEvents();
-
-            bgColorBrush = new SolidBrush(this.BackColor);
-
-            BombsRemainingLabel.Text = nMaxBombs.ToString();
-
-            timer1.Start();
-        }
-
-        public void SetDifficulty(Difficulty difficulty)
-        {
-            this.difficulty = difficulty;
         }
 
         private void onMouseClick(object sender, MouseEventArgs e)
@@ -349,16 +354,21 @@ namespace Minesweeper
         
         private void RestartButton_Click(object sender, EventArgs e)
         {
-            foreach(Control control in addedControls)
+            ResetControls();
+
+            CreateAndDrawGrid();
+
+            EnableClickEvents();
+        }
+
+        private void ResetControls()
+        {
+            foreach (Control control in addedControls)
             {
                 this.Controls.Remove(control);
 
                 control.Dispose();
             }
-
-            CreateAndDrawGrid();
-
-            EnableClickEvents();
 
             nClicks = 0;
 
@@ -369,6 +379,8 @@ namespace Minesweeper
             elapsedSeconds = 0;
             TimerLabel.Text = "0";
             timer1.Start();
+
+            Map = new char[this.Width, this.Height];
         }
 
         private void ReplaceBomb(int x, int y)
@@ -478,6 +490,18 @@ namespace Minesweeper
         private void timer1_Tick(object sender, EventArgs e)
         {
             TimerLabel.Text = (++elapsedSeconds).ToString();   
+        }
+
+        private void DiffSelectButton_Click(object sender, EventArgs e)
+        {
+            this.Invalidate();
+            ResetControls();
+
+            SelectDifficulty();
+
+            CreateAndDrawGrid();
+
+            EnableClickEvents();
         }
     }
 }

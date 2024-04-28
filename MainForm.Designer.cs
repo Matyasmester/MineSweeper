@@ -33,6 +33,7 @@
             this.BombsRemainingLabel = new System.Windows.Forms.Label();
             this.timer1 = new System.Windows.Forms.Timer(this.components);
             this.TimerLabel = new System.Windows.Forms.Label();
+            this.DiffSelectButton = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // RestartButton
@@ -40,7 +41,7 @@
             this.RestartButton.BackColor = System.Drawing.Color.Yellow;
             this.RestartButton.Font = new System.Drawing.Font("Microsoft Sans Serif", 22.2F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(238)));
             this.RestartButton.ForeColor = System.Drawing.Color.Black;
-            this.RestartButton.Location = new System.Drawing.Point(455, 9);
+            this.RestartButton.Location = new System.Drawing.Point(340, 9);
             this.RestartButton.Name = "RestartButton";
             this.RestartButton.Size = new System.Drawing.Size(167, 69);
             this.RestartButton.TabIndex = 0;
@@ -75,12 +76,26 @@
             this.TimerLabel.TabIndex = 3;
             this.TimerLabel.Text = "0";
             // 
+            // DiffSelectButton
+            // 
+            this.DiffSelectButton.BackColor = System.Drawing.Color.Yellow;
+            this.DiffSelectButton.Font = new System.Drawing.Font("Microsoft Sans Serif", 13.8F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(238)));
+            this.DiffSelectButton.ForeColor = System.Drawing.Color.Black;
+            this.DiffSelectButton.Location = new System.Drawing.Point(557, 9);
+            this.DiffSelectButton.Name = "DiffSelectButton";
+            this.DiffSelectButton.Size = new System.Drawing.Size(167, 69);
+            this.DiffSelectButton.TabIndex = 4;
+            this.DiffSelectButton.Text = "Select new difficulty";
+            this.DiffSelectButton.UseVisualStyleBackColor = false;
+            this.DiffSelectButton.Click += new System.EventHandler(this.DiffSelectButton_Click);
+            // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.Silver;
             this.ClientSize = new System.Drawing.Size(1082, 648);
+            this.Controls.Add(this.DiffSelectButton);
             this.Controls.Add(this.TimerLabel);
             this.Controls.Add(this.BombsRemainingLabel);
             this.Controls.Add(this.RestartButton);
@@ -102,6 +117,7 @@
         private System.Windows.Forms.Label BombsRemainingLabel;
         private System.Windows.Forms.Timer timer1;
         private System.Windows.Forms.Label TimerLabel;
+        private System.Windows.Forms.Button DiffSelectButton;
     }
 }
 
