@@ -4,6 +4,7 @@ using System.ComponentModel;
 using System.Data;
 using System.Drawing;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -52,6 +53,8 @@ namespace Minesweeper
 
         private readonly List<Control> addedControls = new List<Control>();
 
+        private Bitmap bitmap;
+
         private char[,] Map;
 
         private int nClicks = 0;
@@ -61,7 +64,7 @@ namespace Minesweeper
         public MainForm()
         {
             InitializeComponent();
-            graphics = this.CreateGraphics();
+            InitGraphics();
 
             SelectDifficulty();
 
@@ -81,6 +84,13 @@ namespace Minesweeper
         public void SetDifficulty(Difficulty difficulty)
         {
             this.difficulty = difficulty;
+        }
+
+        private void InitGraphics()
+        {
+            bitmap = new Bitmap(this.Width, this.Height);
+
+            graphics = Graphics.FromImage(bitmap);
         }
 
         private void SelectDifficulty()
@@ -124,6 +134,7 @@ namespace Minesweeper
                 clientWidth = widthCells * rectUnit;
                 clientHeight = (heightCells * rectUnit) + topOverlayEndsAt;
             }
+            else if (result == DialogResult.Cancel) MessageBox.Show("Why u do dis?");
             else return;
 
             diffSelectForm.Dispose();
@@ -175,6 +186,8 @@ namespace Minesweeper
                 }
 
                 Flag(x, y);
+
+                this.Invalidate();
             }
         }
 
@@ -267,9 +280,9 @@ namespace Minesweeper
         {
             timer1.Stop();
 
-            MessageBox.Show(msg);
-
             DisableClickEvents();
+
+            MessageBox.Show(msg);
         }
 
         private void DisableClickEvents()
@@ -359,6 +372,8 @@ namespace Minesweeper
             CreateAndDrawGrid();
 
             EnableClickEvents();
+
+            this.Invalidate();
         }
 
         private void ResetControls()
@@ -369,6 +384,8 @@ namespace Minesweeper
 
                 control.Dispose();
             }
+
+            addedControls.Clear();
 
             nClicks = 0;
 
@@ -381,6 +398,8 @@ namespace Minesweeper
             timer1.Start();
 
             Map = new char[this.Width, this.Height];
+
+            InitGraphics();
         }
 
         private void ReplaceBomb(int x, int y)
@@ -460,6 +479,8 @@ namespace Minesweeper
             this.Controls.Add(label);
 
             addedControls.Add(label);
+
+            this.Invalidate();
         }
 
         private int GetAdjacentBombCount(int x, int y)
@@ -489,12 +510,11 @@ namespace Minesweeper
 
         private void timer1_Tick(object sender, EventArgs e)
         {
-            TimerLabel.Text = (++elapsedSeconds).ToString();   
+            TimerLabel.Text = (++elapsedSeconds).ToString();
         }
 
         private void DiffSelectButton_Click(object sender, EventArgs e)
         {
-            this.Invalidate();
             ResetControls();
 
             SelectDifficulty();
@@ -502,6 +522,12 @@ namespace Minesweeper
             CreateAndDrawGrid();
 
             EnableClickEvents();
+            this.Invalidate();
+        }
+
+        protected override void OnPaint(PaintEventArgs e)
+        {
+            e.Graphics.DrawImage(bitmap, 0, 0);
         }
     }
 }
